@@ -1,4 +1,5 @@
 import { suite } from 'uvu';
+import * as http from 'node:http';
 import * as assert from 'uvu/assert';
 import sirv from '../packages/sirv/index.mjs';
 import * as utils from './helpers.mjs';
@@ -299,6 +300,31 @@ security('should prevent directory traversal attacks :: dev', async () => {
 		await server.send('GET', '/../../package.json');
 	} catch (err) {
 		assert.is(err.statusCode, 404);
+	} finally {
+		server.close();
+	}
+});
+
+security('should prevent files starting with directory name :: dev', async () => {
+	let server = utils.http({ dev: true });
+	let address = server.address;
+
+	try {
+		let status = await new Promise((resolve, reject) => {
+			let req = http.request({
+				hostname: address.hostname,
+				port: +address.port,
+				path: '/../publicfile.txt',
+				method: 'HEAD',
+			}, (res) => {
+				resolve(res.statusCode);
+			});
+
+			req.on('error', reject);
+			req.end();
+		});
+
+		assert.is(status, 404);
 	} finally {
 		server.close();
 	}

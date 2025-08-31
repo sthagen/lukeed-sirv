@@ -33,7 +33,10 @@ export function http(opts) {
 		send(method, path, opts) {
 			let uri = new URL(path, address);
 			return send(method, uri, opts);
-		}
+		},
+		get address() {
+			return address;
+		},
 	};
 }
 
